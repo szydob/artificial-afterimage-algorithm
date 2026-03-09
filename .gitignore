@@ -48,6 +48,8 @@ coverage.xml
 *.cover
 *.py.cover
 .hypothesis/
+test_report.html
+junit.xml
 .pytest_cache/
 cover/
 
