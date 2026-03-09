@@ -1,0 +1,23 @@
+{
+  "business_type": "gastronomia",
+  "estimated_yearly_profit_pln": 16234464.193898907,
+  "optimal_location": {
+    "lat": 50.0200088,
+    "lon": 20.0001804,
+    "population_density": 4.327310999915324,
+    "competitors_1km": 0.4358474468491774,
+    "competitors_3km": 1.6305936737062172,
+    "accessibility_score": 2.1498488556501956,
+    "rental_cost": 2.0466786445663145,
+    "income_level": 1.7191420639399515
+  },
+  "final_objective_value": -16234464.193898907,
+  "iterations": 500,
+  "population_size": 30,
+  "business_model": {
+    "revenue_model": "Based on foot traffic × average spending × (1 - competition impact)",
+    "cost_model": "Fixed costs (rent) + variable costs (labor, supplies)",
+    "profit": "Revenue - Costs",
+    "assumptions": "Monthly estimates, 25 working days, 12 months per year"
+  }
+}

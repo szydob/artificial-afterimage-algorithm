@@ -1,0 +1,20 @@
+{
+  "total_firms": 1552,
+  "business_categories": {
+    "gastronomia": 931,
+    "zdrowie": 621
+  },
+  "sources": {
+    "OSM": 1552
+  },
+  "avg_competitors_1km": 13.350515463917526,
+  "avg_competitors_3km": 29.728092783505154,
+  "avg_population_density": 23.710979903794986,
+  "avg_rental_cost": 12920.006775779004,
+  "coordinate_bounds": {
+    "lat_min": 50.0200088,
+    "lat_max": 52.049497,
+    "lon_min": 20.0001804,
+    "lon_max": 21.0998421
+  }
+}
