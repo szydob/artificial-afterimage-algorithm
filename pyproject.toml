@@ -8,4 +8,5 @@ dependencies = [
     "numpy>=1.26",
     "jupyter>=1.1",
     "ipykernel>=6.29",
+    "pandas>=2.2",
 ]
