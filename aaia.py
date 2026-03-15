@@ -79,13 +79,23 @@ def calculate_best_and_worst(population, data):
     return best, worst
 
 
-def find_solution(data, max_iterations=1000, population_size=50):
+def find_solution(
+    data,
+    max_iterations=1000,
+    population_size=50,
+    return_history=False,
+    early_stopping_rounds=0,
+    tol=0.0,
+):
     """
     Find a single solution that minimizes the sum of Manhattan distances to all data points using an AAIA-inspired algorithm.
     params:
         data: numpy array of shape (n_samples, n_features)
         max_iterations: maximum number of iterations to run the algorithm
         population_size: number of candidate solutions to maintain in each iteration
+        return_history: if True, also return centroid history across iterations
+        early_stopping_rounds: if > 0, stop if no improvement in best solution for this many rounds
+        tol: minimum improvement in best solution to reset early stopping counters
     returns: best solution found (numpy array of shape (n_features,))
     """
     count = 0
@@ -94,6 +104,9 @@ def find_solution(data, max_iterations=1000, population_size=50):
     high = data.max(axis=0)
     population = np.random.uniform(low, high, size=(population_size, data.shape[1]))
     best_solution, worst_solution = calculate_best_and_worst(population, data)
+    history = [best_solution.copy()]
+    best_score = fitness(best_solution, data)
+    no_improve = 0
 
     while count < max_iterations:
         V = calculate_visual_angle(population, best_solution)
@@ -101,54 +114,28 @@ def find_solution(data, max_iterations=1000, population_size=50):
 
         local_best, local_worst = calculate_best_and_worst(population, data)
 
-        if fitness(local_best, data) < fitness(best_solution, data):
+        local_best_score = fitness(local_best, data)
+        if local_best_score + tol < best_score:
             best_solution = local_best
+            best_score = local_best_score
+            no_improve = 0
+        else:
+            no_improve += 1
         if fitness(local_worst, data) > fitness(worst_solution, data):
             worst_solution = local_worst
+
+        history.append(best_solution.copy())
 
         population = calculate_population(S, best_solution, worst_solution, population)
         # clip to data range to prevent overflow
         population = np.clip(population, low, high)
         count += 1
 
+        if early_stopping_rounds and no_improve >= early_stopping_rounds:
+            break
+
+    iterations_done = count
+    if return_history:
+        return best_solution, np.array(history), iterations_done
+
     return best_solution
-
-
-def classify(X_train, y_train, X_test, best_solution):
-    """Assign test points to clusters using Manhattan distance ranges from training data.
-    params:
-        X_train: numpy array of shape (n_train_samples, n_features)
-        y_train: numpy array of shape (n_train_samples,) with class labels
-        X_test: numpy array of shape (n_test_samples, n_features)
-        best_solution: numpy array of shape (n_features,) found by AAIA
-    returns:
-        labels: numpy array of shape (n_test_samples,) with predicted class labels for test data
-        thresholds: list of distance thresholds used for classification
-        distances_train: numpy array of shape (n_train_samples,) with distances from training points to
-        label_map: dict mapping raw label indices to original class labels
-    """
-    n_clusters = len(np.unique(y_train))
-    distances_train = np.sum(np.abs(X_train - best_solution), axis=1)
-
-    class_ranges = {}
-    for cls in range(n_clusters):
-        mask = y_train == cls
-        class_ranges[cls] = (distances_train[mask].min(), distances_train[mask].max())
-
-    sorted_classes = sorted(
-        class_ranges, key=lambda c: np.mean(distances_train[y_train == c])
-    )
-    thresholds = [
-        (class_ranges[sorted_classes[i]][1] + class_ranges[sorted_classes[i + 1]][0])
-        / 2
-        for i in range(n_clusters - 1)
-    ]
-    # for safety
-    thresholds = sorted(thresholds)
-
-    distances_test = np.sum(np.abs(X_test - best_solution), axis=1)
-    raw_labels = np.digitize(distances_test, thresholds)
-    label_map = {i: sorted_classes[i] for i in range(n_clusters)}
-    labels = np.array([label_map[l] for l in raw_labels])
-
-    return labels, thresholds, distances_train, label_map
