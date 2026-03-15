@@ -23,8 +23,8 @@ if uploaded_file is not None:
     max_iterations = int(
         st.sidebar.number_input(
             "Iterations",
-            min_value=10,
-            max_value=5000,
+            min_value=1,
+            max_value=5000000,
             value=500,
             step=10,
         )
@@ -33,7 +33,7 @@ if uploaded_file is not None:
         st.sidebar.number_input(
             "Population size",
             min_value=1,
-            max_value=100000,
+            max_value=10000000,
             value=50,
             step=10,
         )
@@ -196,6 +196,7 @@ if uploaded_file is not None:
                     st.session_state["aaia"] = {
                         "X_scaled": X_scaled,
                         "X_df": X_df,
+                        "df_results": df_filtered.reset_index(drop=True),
                         "best_sol": best_sol,
                         "distances": distances,
                         "centroid_history": centroid_history,
@@ -203,18 +204,30 @@ if uploaded_file is not None:
                         "total_samples": total_samples,
                     }
 
-                    st.success("Clustering finished — results stored. Use plot controls to explore without rerunning.")
+                    st.success("Clustering finished")
     
     # Render results from session state so changing plot controls doesn't re-run AAIA
     if "aaia" in st.session_state:
         data = st.session_state["aaia"]
         X_scaled = data["X_scaled"]
         X_df = data["X_df"]
+        df_results = data.get("df_results", df_filtered.reset_index(drop=True))
         best_sol = data["best_sol"]
         distances = data["distances"]
         centroid_history = data["centroid_history"]
         iterations_done = data.get("iterations_done", None)
         total_samples = data.get("total_samples", len(distances))
+
+        # ensure all arrays/dataframes are aligned to avoid out-of-bounds after filter changes
+        aligned_n = min(len(distances), len(X_scaled), len(df_results))
+        if aligned_n == 0:
+            st.warning("No stored samples to display. Run AAIA clustering again.")
+            st.stop()
+
+        distances = distances[:aligned_n]
+        X_scaled = X_scaled[:aligned_n]
+        df_results = df_results.iloc[:aligned_n].reset_index(drop=True)
+        total_samples = aligned_n
 
         # compute current top_n
         if nearest_mode == "Percentage":
@@ -223,7 +236,7 @@ if uploaded_file is not None:
             top_n = min(nearest_count, total_samples)
 
         nearest_indices = np.argsort(distances)[:top_n]
-        nearest_df = df_filtered.iloc[nearest_indices].copy()
+        nearest_df = df_results.iloc[nearest_indices].copy()
         nearest_df["manhattan_distance"] = distances[nearest_indices]
         nearest_df = nearest_df.sort_values("manhattan_distance")
 
