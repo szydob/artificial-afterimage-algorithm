@@ -29,11 +29,44 @@ uv sync
 uv run python -m ipykernel install --user --name=aaia --display-name "AAIA (venv)"
 ```
 
+## Run app
+
+```bash
+uv run python main.py
+```
+
+Alternative:
+
+```bash
+uv run streamlit run gui.py
+```
+
+## What the app does
+
+- Loads a CSV and applies sidebar filters.
+- Runs AAIA to find one representative solution (center-like point).
+- Computes Manhattan distance of each sample to this solution.
+- Returns nearest samples by selected percentage or count.
+- Lets you tune AAIA `population_size` and `max_iterations`.
+- Supports early stopping (`early_stopping_rounds`) and improvement tolerance (`tol`).
+- Shows histogram + scatter side-by-side (scatter uses 2 user-selected features).
+- Download the top-N nearest samples as CSV directly from the UI.
+
+## Typical flow
+
+1. Upload a CSV.
+2. Pick features and filter ranges in the sidebar.
+3. Set AAIA parameters (`iterations`, `population`, optional early stopping).
+4. Run clustering.
+5. Explore nearest samples, centroid history, histogram, and scatter.
+
 ## Project structure
 
 ```
 .
 ├── aaia.py           # AAIA algorithm implementation
+├── gui.py            # Streamlit UI
+├── main.py           # app entrypoint (starts Streamlit)
 ├── pyproject.toml    # project dependencies
 └── README.md
 ```
