@@ -47,6 +47,18 @@ python build_database.py
 ### 4. Optymalizacja lokalizacji
 Otwórz `firmy.ipynb` w VS Code i uruchom komórki (upewnij się, że kernel to `firmy_env`).
 
+Skrypt `optimize_location.py` umożliwia również uruchomienie całego procesu z wiersza poleceń. Od wersji wykorzystującej AAIA można:
+
+```bash
+# optymalizacja na całym obszarze
+python optimize_location.py --business-type gastronomia
+
+# najpierw klasteryzacja z użyciem AAIA, a następnie wybór klastra "białej plamy"
+python optimize_location.py --business-type gastronomia --clusters 5
+```
+
+Parametr `--clusters N` uruchamia algorytm AAIA, który iteracyjnie wyszukuje `N` środków klastrów oraz przydziela firmy do najbliższego centrum. Po wyznaczeniu klasterów algorytm wybiera ten z najmniejszym udziałem wskazanej kategorii (np. gastronomia) i optymalizuje lokalizację tylko w jego obrębie.
+
 ## Źródła danych
 
 ### 1. OpenStreetMap / Overpass API

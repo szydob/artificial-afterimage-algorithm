@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-Location optimization script using AAIA algorithm
-Usage: python optimize_location.py --business-type gastronomia
+Location optimization script using AAIA algorithm with optional clustering.
+
+Goals:
+- cluster existing firms geographically,
+- identify clusters with low representation of a given business category (white spots),
+- recommend an optimal location within the chosen cluster or entire region for a new business.
+
+Usage examples:
+  python optimize_location.py --business-type gastronomia          # optimize across all data
+  python optimize_location.py --business-type handel --clusters 5  # cluster data and target sparse cluster
 """
 
 import argparse
@@ -10,6 +18,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import os
+
+# clustering
+# AAIA-based clustering will be used instead of k-means
 
 # Add path to aaia module
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -164,7 +175,7 @@ def find_optimal_location(data, objective_func, business_type='gastronomia', max
 
     return best_solution, fitness_history
 
-def plot_optimization_results(firms_df, optimal_location, fitness_history, business_type):
+def plot_optimization_results(firms_df, optimal_location, fitness_history, business_type, cluster_label=None):
     """Create visualization of optimization results"""
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
 
@@ -176,11 +187,21 @@ def plot_optimization_results(firms_df, optimal_location, fitness_history, busin
         plot_df = firms_df
         title_suffix = ""
 
+    if cluster_label is not None and 'cluster' in firms_df.columns:
+        # color points by cluster if available
+        plot_df = plot_df[plot_df['cluster'] == cluster_label]
+        title_suffix += f" (cluster {cluster_label})"
+
     # 1. Firms and optimal location
     ax = axes[0, 0]
-    scatter = ax.scatter(plot_df['lon'], plot_df['lat'],
-                        c=plot_df['competitors_1km'],
-                        cmap='Reds', alpha=0.6, s=30)
+    if 'cluster' in plot_df.columns:
+        scatter = ax.scatter(plot_df['lon'], plot_df['lat'],
+                            c=plot_df['cluster'],
+                            cmap='tab20', alpha=0.6, s=30)
+    else:
+        scatter = ax.scatter(plot_df['lon'], plot_df['lat'],
+                            c=plot_df['competitors_1km'],
+                            cmap='Reds', alpha=0.6, s=30)
     ax.scatter(optimal_location[1], optimal_location[0],
               c='blue', marker='*', s=300, label='Optimal Location', edgecolors='black')
     ax.set_title(f'Firm Locations and Optimal New Location{title_suffix}')
@@ -225,11 +246,54 @@ def plot_optimization_results(firms_df, optimal_location, fitness_history, busin
     plt.savefig(f'optimization_results_{business_type}.png', dpi=300, bbox_inches='tight')
     # plt.show()  # Commented out to avoid blocking in headless environment
 
+def aaia_clustering(df, n_clusters=5, max_iterations=500, population_size=50):
+    """Cluster data geographically using AAIA find_solution repeatedly.
+
+    Each iteration finds a center that minimizes sum of Manhattan distances to
+    all points (using the aaia.find_solution helper).  The algorithm then
+    assigns every point to the closest center found so far. This mimics a
+    k-means style partitioning while relying on AAIA's global search.
+    """
+    # only geographic coordinates are used here; extend if needed
+    data = df[['lat', 'lon']].values
+    n_points = data.shape[0]
+
+    centers = []
+    best_dists = np.full(n_points, np.inf)
+    assignments = np.zeros(n_points, dtype=int)
+
+    for k in range(n_clusters):
+        center = aaia.find_solution(data, max_iterations=max_iterations, population_size=population_size)
+        centers.append(center)
+        dists = np.sum(np.abs(data - center), axis=1)
+        better = dists < best_dists
+        assignments[better] = k
+        best_dists[better] = dists[better]
+
+    df['cluster'] = assignments
+    return df, np.vstack(centers)
+
+
+def summarize_clusters(df, target_type):
+    """Return counts per cluster and identify cluster with fewest target-type firms."""
+    summary = df.pivot_table(index='cluster', columns='business_category',
+                              aggfunc='size', fill_value=0)
+    summary['total'] = summary.sum(axis=1)
+    summary['target_count'] = summary.get(target_type, 0)
+    # compute proportion
+    summary['target_prop'] = summary['target_count'] / summary['total']
+    # cluster with smallest proportion of target_type
+    best_cluster = summary['target_prop'].idxmin()
+    return summary, best_cluster
+
+
 def main():
     parser = argparse.ArgumentParser(description='Optimize business location using AAIA')
     parser.add_argument('--business-type', default='gastronomia',
                        choices=['gastronomia', 'handel', 'zdrowie', 'all'],
                        help='Type of business to optimize location for')
+    parser.add_argument('--clusters', type=int, default=5,
+                       help='Number of geographic clusters to form using AAIA (0 to skip)')
     parser.add_argument('--max-iterations', type=int, default=500,
                        help='Maximum number of optimization iterations')
     parser.add_argument('--population-size', type=int, default=30,
@@ -248,15 +312,36 @@ def main():
         print("Error: firmy_optimization.csv not found. Run build_database.py first.")
         sys.exit(1)
 
-    # Filter by business type if specified
-    if args.business_type != 'all':
-        original_len = len(df)
-        df = df[df['business_category'] == args.business_type]
-        print(f"Filtered to {len(df)} {args.business_type} firms (from {original_len})")
+    # perform clustering if requested
+    cluster_label = None
+    df_cluster = None
+    if args.clusters and args.clusters > 0:
+        print(f"Clustering firms into {args.clusters} clusters using AAIA...")
+        df, centroids = aaia_clustering(df, n_clusters=args.clusters,
+                                       max_iterations=args.max_iterations,
+                                       population_size=args.population_size)
+        summary, best_cluster = summarize_clusters(df, args.business_type)
+        print("Cluster summary (counts and proportions):")
+        print(summary)
+        print(f"Cluster with lowest proportion of '{args.business_type}': {best_cluster}")
+        cluster_label = best_cluster
+        df_cluster = df[df['cluster'] == cluster_label].copy()
+        print(f"Selected cluster {cluster_label} with {len(df_cluster)} total firms")
+    else:
+        df_cluster = df.copy()
 
-        if len(df) == 0:
-            print(f"No firms found for type: {args.business_type}")
-            sys.exit(1)
+    # Filter for plotting (we don't remove non-target firms from optimization data)
+    if args.business_type != 'all':
+        plot_df = df_cluster[df_cluster['business_category'] == args.business_type]
+        print(f"Plotting {len(plot_df)} firms of type {args.business_type} in chosen dataset")
+        if len(plot_df) == 0:
+            print(f"No firms found for type: {args.business_type} within chosen data")
+        # df remains df_cluster for optimization
+    else:
+        plot_df = df_cluster
+
+    # Use df_cluster (all firms in cluster or full data) for optimization
+    df = df_cluster
 
     # Prepare data (exclude business_category column)
     features = ['lat', 'lon', 'population_density', 'competitors_1km',
@@ -300,12 +385,13 @@ def main():
     print(f"Rental cost: {optimal_location[6]:.4f}")
     print(f"Income level: {optimal_location[7]:.4f}")
 
-    # Load original data for plotting
-    original_df = pd.read_csv('firmy_unified.csv')
-
-    # Create plots
+    # Create plots using filtered/clustered data
     print("\nGenerating visualization...")
-    plot_optimization_results(original_df, optimal_location, fitness_history, args.business_type)
+    plot_optimization_results(plot_df if 'plot_df' in locals() else df,
+                              optimal_location,
+                              fitness_history,
+                              args.business_type,
+                              cluster_label=cluster_label)
 
     # Save results
     results = {
@@ -321,6 +407,7 @@ def main():
             'rental_cost': float(optimal_location[6]),
             'income_level': float(optimal_location[7])
         },
+        'cluster_used': int(cluster_label) if cluster_label is not None else None,
         'final_objective_value': float(obj_func(optimal_location, X)),
         'iterations': args.max_iterations,
         'population_size': args.population_size,

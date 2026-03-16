@@ -1,20 +1,22 @@
 {
-  "total_firms": 1552,
+  "total_firms": 419,
   "business_categories": {
-    "gastronomia": 931,
-    "zdrowie": 621
+    "usługi kosmetyczne": 177,
+    "handel": 123,
+    "gastronomia": 79,
+    "usługi finansowe": 40
   },
   "sources": {
-    "OSM": 1552
+    "OSM": 419
   },
-  "avg_competitors_1km": 13.350515463917526,
-  "avg_competitors_3km": 29.728092783505154,
-  "avg_population_density": 23.710979903794986,
-  "avg_rental_cost": 12920.006775779004,
+  "avg_competitors_1km": 11.028639618138424,
+  "avg_competitors_3km": 41.41527446300716,
+  "avg_population_density": 191.91097833758283,
+  "avg_rental_cost": 2549.5027661793983,
   "coordinate_bounds": {
-    "lat_min": 50.0200088,
-    "lat_max": 52.049497,
-    "lon_min": 20.0001804,
-    "lon_max": 21.0998421
+    "lat_min": 49.9589443,
+    "lat_max": 50.0499476,
+    "lon_min": 19.9005162,
+    "lon_max": 20.0995175
   }
 }

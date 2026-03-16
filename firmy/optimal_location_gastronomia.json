@@ -1,17 +1,18 @@
 {
   "business_type": "gastronomia",
-  "estimated_yearly_profit_pln": 16234464.193898907,
+  "estimated_yearly_profit_pln": -170409.47873779933,
   "optimal_location": {
-    "lat": 50.0200088,
-    "lon": 20.0001804,
-    "population_density": 4.327310999915324,
-    "competitors_1km": 0.4358474468491774,
-    "competitors_3km": 1.6305936737062172,
-    "accessibility_score": 2.1498488556501956,
-    "rental_cost": 2.0466786445663145,
-    "income_level": 1.7191420639399515
+    "lat": 50.0152256097832,
+    "lon": 20.091828698947367,
+    "population_density": -0.31215745238538073,
+    "competitors_1km": 0.5366481702399171,
+    "competitors_3km": -0.8206642682148264,
+    "accessibility_score": -1.923655189560211,
+    "rental_cost": 1.4171798561928475,
+    "income_level": -1.128322989115073
   },
-  "final_objective_value": -16234464.193898907,
+  "cluster_used": 0,
+  "final_objective_value": 170409.47873779933,
   "iterations": 500,
   "population_size": 30,
   "business_model": {

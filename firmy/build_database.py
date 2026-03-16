@@ -47,18 +47,40 @@ class FirmDatabaseBuilder:
             # OSM to standard
             'restaurant': 'gastronomia',
             'cafe': 'gastronomia',
-            'bank': 'usługi finansowe',
-            'pharmacy': 'zdrowie',
+            'bar': 'gastronomia',
+            'pub': 'gastronomia',
+            'fast_food': 'gastronomia',
+            'bakery': 'handel',
             'supermarket': 'handel',
             'shop': 'handel',
+            'butcher': 'handel',
+            'clothes': 'handel',
+            'electronics': 'handel',
+            'hairdresser': 'usługi kosmetyczne',
+            'beauty': 'usługi kosmetyczne',
+            'bank': 'usługi finansowe',
+            'atm': 'usługi finansowe',
+            'pharmacy': 'zdrowie',
+            'hospital': 'zdrowie',
+            'dentist': 'zdrowie',
+            'doctor': 'zdrowie',
+            'school': 'edukacja',
+            'library': 'edukacja',
+            'hotel': 'turystyka',
+            'cinema': 'rozrywka',
+            'theatre': 'rozrywka',
             'fuel': 'usługi transportowe',
+            'post_office': 'usługi pocztowe',
 
             # CEIDG PKD to standard (simplified)
             '56.10.Z': 'gastronomia',
             '47.11.Z': 'handel',
             '64.19.Z': 'usługi finansowe',
             '86.21.Z': 'zdrowie',
-            '96.02.Z': 'usługi kosmetyczne'
+            '96.02.Z': 'usługi kosmetyczne',
+            '85.10.Z': 'edukacja',
+            '55.10.Z': 'turystyka',
+            '90.01.Z': 'rozrywka'
         }
 
         if 'type' in df.columns:

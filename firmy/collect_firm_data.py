@@ -62,7 +62,7 @@ class FirmDataCollector:
             bbox = [49.95, 19.90, 50.05, 20.10]  # [south, west, north, east]
 
         if business_types is None:
-            business_types = ['restaurant', 'cafe', 'bank', 'pharmacy', 'supermarket', 'shop']
+            business_types = ['restaurant', 'cafe', 'bank', 'pharmacy', 'supermarket', 'shop', 'bakery', 'butcher', 'clothes', 'electronics', 'hairdresser', 'beauty', 'school', 'hospital', 'hotel', 'bar', 'pub', 'fast_food', 'dentist', 'doctor', 'fuel', 'atm', 'post_office', 'library', 'cinema', 'theatre']
 
         overpass_url = "http://overpass-api.de/api/interpreter"
         firms = []
@@ -234,6 +234,11 @@ class FirmDataCollector:
             demographics_df.to_sql('regions', self.conn, if_exists='replace', index=False)
             print("Saved demographic data")
 
+        print("Saving to CSV...")
+        csv_path = 'firmy_raw.csv'
+        enriched_df.to_csv(csv_path, index=False, encoding='utf-8')
+        print(f"Saved {len(enriched_df)} firms to {csv_path}")
+
         self.conn.close()
         print("Data collection complete!")
 
@@ -245,7 +250,7 @@ def main():
                        default=[49.9, 19.8, 50.1, 20.2],
                        help='Bounding box: south west north east')
     parser.add_argument('--business-types', nargs='+',
-                       default=['restaurant', 'cafe', 'bank', 'pharmacy', 'supermarket', 'shop'],
+                       default=['restaurant', 'cafe', 'bank', 'pharmacy', 'supermarket', 'shop', 'bakery', 'butcher', 'clothes', 'electronics', 'hairdresser', 'beauty', 'school', 'hospital', 'hotel', 'bar', 'pub', 'fast_food', 'dentist', 'doctor', 'fuel', 'atm', 'post_office', 'library', 'cinema', 'theatre'],
                        help='Business types to collect')
     parser.add_argument('--db-path', default='firmy.db', help='Database path')
 
